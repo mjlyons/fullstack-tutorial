@@ -1,8 +1,13 @@
-const { DataSource } = require('apollo-datasource');
-const isEmail = require('isemail');
+import { DataSource, DataSourceConfig } from "apollo-datasource";
+import isEmail from "isemail";
+import { IStore, IUser, ITrip } from "../interfaces";
+import { Context } from "apollo-server-core";
 
-class UserAPI extends DataSource {
-  constructor({ store }) {
+export class UserAPI extends DataSource {
+  private store: IStore;
+  private context: Context;
+
+  constructor({ store }: { store: IStore }) {
     super();
     this.store = store;
   }
@@ -13,7 +18,7 @@ class UserAPI extends DataSource {
    * like caches and context. We'll assign this.context to the request context
    * here, so we can know about the user making requests
    */
-  initialize(config) {
+  initialize(config: DataSourceConfig<IUser>): void {
     this.context = config.context;
   }
 
@@ -22,7 +27,7 @@ class UserAPI extends DataSource {
    * have to be. If the user is already on the context, it will use that user
    * instead
    */
-  async findOrCreateUser({ email: emailArg } = {}) {
+  async findOrCreateUser({ email: emailArg }: { email?: string } = {}) {
     const email =
       this.context && this.context.user ? this.context.user.email : emailArg;
     if (!email || !isEmail.validate(email)) return null;
@@ -31,9 +36,13 @@ class UserAPI extends DataSource {
     return users && users[0] ? users[0] : null;
   }
 
-  async bookTrips({ launchIds }) {
+  async bookTrips({
+    launchIds
+  }: {
+    launchIds: number[];
+  }): Promise<(number | null)[]> {
     const userId = this.context.user.id;
-    if (!userId) return;
+    if (!userId) Promise.reject();
 
     let results = [];
 
@@ -47,37 +56,37 @@ class UserAPI extends DataSource {
     return results;
   }
 
-  async bookTrip({ launchId }) {
+  async bookTrip({ launchId }: { launchId: number }): Promise<number | null> {
     const userId = this.context.user.id;
     const res = await this.store.trips.findOrCreate({
-      where: { userId, launchId },
+      where: { userId, launchId }
     });
-    return res && res.length ? res[0].get() : false;
+    return res && res.length ? res[0].get("id") : null;
   }
 
-  async cancelTrip({ launchId }) {
+  async cancelTrip({ launchId }: { launchId: number }): Promise<boolean> {
     const userId = this.context.user.id;
     return !!this.store.trips.destroy({ where: { userId, launchId } });
   }
 
-  async getLaunchIdsByUser() {
+  async getLaunchIdsByUser(): Promise<number[]> {
     const userId = this.context.user.id;
     const found = await this.store.trips.findAll({
-      where: { userId },
+      where: { userId }
     });
     return found && found.length
-      ? found.map(l => l.dataValues.launchId).filter(l => !!l)
+      ? found
+          .map(launch => /*launch.dataValues.launchId*/ launch.launchId)
+          .filter(launch => !!launch)
       : [];
   }
 
-  async isBookedOnLaunch({ launchId }) {
+  async isBookedOnLaunch({ launchId }: { launchId: number }): Promise<boolean> {
     if (!this.context || !this.context.user) return false;
     const userId = this.context.user.id;
     const found = await this.store.trips.findAll({
-      where: { userId, launchId },
+      where: { userId, launchId }
     });
     return found && found.length > 0;
   }
 }
-
-module.exports = UserAPI;

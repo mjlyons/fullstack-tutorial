@@ -4,6 +4,11 @@
   "private": true,
   "dependencies": {
     "@reach/router": "^1.2.1",
+    "@types/jest": "^23.3.11",
+    "@types/node": "^10.12.18",
+    "@types/reach__router": "^1.2.2",
+    "@types/react": "^16.7.18",
+    "@types/react-dom": "^16.0.11",
     "apollo-cache-inmemory": "alpha",
     "apollo-client": "alpha",
     "apollo-link-http": "^1.5.5",
@@ -12,10 +17,11 @@
     "graphql-tag": "^2.10.0",
     "polished": "^2.3.0",
     "react": "^16.5.2",
-    "react-apollo": "alpha",
-    "react-dom": "^16.5.2",
+    "react-apollo": "^2.3.3",
+    "react-dom": "^16.7.0",
     "react-emotion": "^9.2.12",
-    "react-scripts": "2.0.4"
+    "react-scripts": "^2.1.2",
+    "typescript": "^3.2.2"
   },
   "scripts": {
     "start": "react-scripts start",
